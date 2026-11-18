@@ -37,6 +37,19 @@ async function start() {
   if (!response.ok) throw new Error("Location feed unavailable");
   const churches = await response.json();
   const map = L.map("map", { scrollWheelZoom: true }).setView([20, 0], 2);
+  const mapElement = map.getContainer();
+  mapElement.addEventListener("wheel", event => {
+    if (event.deltaY || !event.wheelDeltaY) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    // Some mouse drivers report vertical movement only in the legacy wheel field.
+    mapElement.dispatchEvent(new WheelEvent("wheel", {
+      deltaY: -event.wheelDeltaY,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      cancelable: true,
+    }));
+  }, { capture: true, passive: false });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
