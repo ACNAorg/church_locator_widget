@@ -36,7 +36,7 @@ async function start() {
   const response = await fetch(preview ? "churches.sample.json" : "churches.live.json");
   if (!response.ok) throw new Error("Location feed unavailable");
   const churches = await response.json();
-  const map = L.map("map", { scrollWheelZoom: true }).setView([20, 0], 2);
+  const map = L.map("map", { scrollWheelZoom: true, minZoom: 1, maxZoom: 19 }).setView([20, 0], 2);
   const mapElement = map.getContainer();
   mapElement.addEventListener("wheel", event => {
     if (event.deltaY || !event.wheelDeltaY) return;
@@ -50,10 +50,9 @@ async function start() {
       cancelable: true,
     }));
   }, { capture: true, passive: false });
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-  }).addTo(map);
+  addBasemap(map).catch(error => {
+    console.warn("The map background could not be loaded.", error);
+  });
   if (churches.some(church => church.geocoding_attribution)) {
     map.attributionControl.addAttribution('Geocoding by <a href="https://www.geoapify.com/">Geoapify</a>');
   }
@@ -83,6 +82,18 @@ async function start() {
   search.disabled = false;
   search.addEventListener("input", render);
   render();
+}
+
+async function addBasemap(map) {
+  const response = await fetch("https://tiles.openfreemap.org/styles/positron");
+  if (!response.ok) throw new Error("Basemap style unavailable");
+  const style = await response.json();
+  const hiddenLayers = new Set([
+    "park", "landcover_ice_shelf", "landcover_glacier", "landcover_wood",
+    "waterway_line_label", "water_name_point_label", "water_name_line_label",
+  ]);
+  style.layers = style.layers.filter(layer => !hiddenLayers.has(layer.id));
+  L.maplibreGL({ style, interactive: false, pane: "tilePane" }).addTo(map);
 }
 
 start().catch(() => {
