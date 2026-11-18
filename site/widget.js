@@ -14,12 +14,6 @@ function churchPopup(church) {
     note.textContent = "Approximate pin. Confirm the location before visiting.";
     popup.append(note);
   }
-  if (church.geocoding_attribution) {
-    const credit = document.createElement("small");
-    credit.textContent = church.geocoding_attribution;
-    popup.append(credit);
-  }
-
   if (/^https?:\/\//i.test(church.website || "")) {
     const website = document.createElement("a");
     website.href = church.website;
@@ -27,6 +21,11 @@ function churchPopup(church) {
     website.rel = "noopener noreferrer";
     website.textContent = "Church website";
     popup.append(website);
+  }
+  if (church.geocoding_attribution) {
+    const credit = document.createElement("small");
+    credit.textContent = church.geocoding_attribution;
+    popup.append(credit);
   }
   return popup;
 }

@@ -30,3 +30,4 @@ input {
 output { font-size: .875rem; }
 #map { min-height: 240px; background: #dce6e0; }
 .church-popup p { margin: .35rem 0; }
+.church-popup small { display: block; margin-top: .35rem; }
