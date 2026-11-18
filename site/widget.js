@@ -36,7 +36,7 @@ async function start() {
   const response = await fetch(preview ? "churches.sample.json" : "churches.live.json");
   if (!response.ok) throw new Error("Location feed unavailable");
   const churches = await response.json();
-  const map = L.map("map", { scrollWheelZoom: false }).setView([20, 0], 2);
+  const map = L.map("map", { scrollWheelZoom: true }).setView([20, 0], 2);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
