@@ -2,6 +2,14 @@ const search = document.querySelector("#search");
 const suggestions = document.querySelector("#suggestions");
 const status = document.querySelector("#status");
 
+function matchRank(location, query) {
+  if (location.name === query) return 0;
+  if (location.name.startsWith(query)) return 1;
+  if (location.name.includes(query)) return 2;
+  if (location.address.startsWith(query)) return 3;
+  return 4;
+}
+
 function churchPopup(church) {
   const popup = document.createElement("div");
   popup.className = "church-popup";
@@ -59,6 +67,8 @@ async function start() {
 
   const locations = churches.map(church => ({
     church,
+    name: church.name.toLowerCase(),
+    address: church.address.toLowerCase(),
     text: (church.name + " " + church.address).toLowerCase(),
     marker: L.marker([church.lat, church.lng], {
       title: church.name,
@@ -118,7 +128,7 @@ async function start() {
   function render() {
     const query = search.value.trim().toLowerCase();
     const matches = query ? locations.filter(location => location.text.includes(query)) : locations;
-    options = query ? matches : [];
+    options = query ? [...matches].sort((a, b) => matchRank(a, query) - matchRank(b, query)) : [];
     showMarkers(matches);
     openSuggestions();
   }
