@@ -1,0 +1,32 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(240px, 1fr);
+  background: #eef2ed;
+  color: #18382e;
+  font: 15px system-ui, sans-serif;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem 1rem;
+  padding: .9rem 1rem;
+  border-bottom: 1px solid #c9d8cf;
+  background: #f8faf8;
+}
+label { font-weight: 650; }
+input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: .65rem .8rem;
+  border: 1px solid #8da699;
+  border-radius: .4rem;
+  background: white;
+  font: inherit;
+}
+output { font-size: .875rem; }
+#map { min-height: 240px; background: #dce6e0; }
+.church-popup p { margin: .35rem 0; }
