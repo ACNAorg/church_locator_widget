@@ -52,15 +52,16 @@ async function start() {
       alt: church.name,
     }).bindPopup(() => churchPopup(church)),
   }));
-  const markers = L.featureGroup().addTo(map);
+  const markers = L.markerClusterGroup({ showCoverageOnHover: false }).addTo(map);
 
   function render() {
     const query = search.value.trim().toLowerCase();
-    markers.clearLayers();
+    const visibleMarkers = [];
     for (const { text, marker } of locations) {
-      if (text.includes(query)) markers.addLayer(marker);
+      if (text.includes(query)) visibleMarkers.push(marker);
     }
-    const count = markers.getLayers().length;
+    markers.clearLayers().addLayers(visibleMarkers);
+    const count = visibleMarkers.length;
     if (count) map.fitBounds(markers.getBounds(), { padding: [30, 30], maxZoom: 14 });
     status.textContent = (preview ? "Sample data · " : "") +
       (count ? count + (count === 1 ? " church" : " churches") : "No churches found");
