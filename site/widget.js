@@ -118,7 +118,7 @@ async function start() {
   function render() {
     const query = search.value.trim().toLowerCase();
     const matches = query ? locations.filter(location => location.text.includes(query)) : locations;
-    options = query ? matches.slice(0, 8) : [];
+    options = query ? matches : [];
     showMarkers(matches);
     openSuggestions();
   }
