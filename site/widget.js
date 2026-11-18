@@ -1,4 +1,5 @@
 const search = document.querySelector("#search");
+const suggestions = document.querySelector("#suggestions");
 const status = document.querySelector("#status");
 
 function churchPopup(church) {
@@ -57,6 +58,7 @@ async function start() {
   }
 
   const locations = churches.map(church => ({
+    church,
     text: (church.name + " " + church.address).toLowerCase(),
     marker: L.marker([church.lat, church.lng], {
       title: church.name,
@@ -64,22 +66,87 @@ async function start() {
     }).bindPopup(() => churchPopup(church)),
   }));
   const markers = L.markerClusterGroup({ showCoverageOnHover: false }).addTo(map);
+  let options = [];
+  let activeOption = -1;
 
-  function render() {
-    const query = search.value.trim().toLowerCase();
-    const visibleMarkers = [];
-    for (const { text, marker } of locations) {
-      if (text.includes(query)) visibleMarkers.push(marker);
-    }
-    markers.clearLayers().addLayers(visibleMarkers);
-    const count = visibleMarkers.length;
-    if (count) map.fitBounds(markers.getBounds(), { padding: [30, 30], maxZoom: 14 });
+  function showMarkers(matches, fit = true) {
+    markers.clearLayers().addLayers(matches.map(location => location.marker));
+    const count = matches.length;
+    if (count && fit) map.fitBounds(markers.getBounds(), { padding: [30, 30], maxZoom: 14 });
     status.textContent = (preview ? "Sample data · " : "") +
       (count ? count + (count === 1 ? " church" : " churches") : "No churches found");
   }
 
+  function closeSuggestions() {
+    suggestions.hidden = true;
+    suggestions.replaceChildren();
+    search.setAttribute("aria-expanded", "false");
+    search.removeAttribute("aria-activedescendant");
+    activeOption = -1;
+  }
+
+  function select(location) {
+    search.value = location.church.name;
+    options = [location];
+    closeSuggestions();
+    showMarkers(options, false);
+    map.setView(location.marker.getLatLng(), 15, { animate: false });
+    markers.zoomToShowLayer(location.marker, () => location.marker.openPopup());
+  }
+
+  function openSuggestions() {
+    closeSuggestions();
+    if (!options.length) return;
+    options.forEach((location, index) => {
+      const option = document.createElement("li");
+      option.id = "church-suggestion-" + index;
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", "false");
+      const name = document.createElement("strong");
+      name.textContent = location.church.name;
+      const address = document.createElement("small");
+      address.textContent = location.church.address;
+      option.append(name, address);
+      option.addEventListener("mousedown", event => event.preventDefault());
+      option.addEventListener("click", () => select(location));
+      suggestions.append(option);
+    });
+    suggestions.hidden = false;
+    search.setAttribute("aria-expanded", "true");
+  }
+
+  function render() {
+    const query = search.value.trim().toLowerCase();
+    const matches = query ? locations.filter(location => location.text.includes(query)) : locations;
+    options = query ? matches.slice(0, 8) : [];
+    showMarkers(matches);
+    openSuggestions();
+  }
+
   search.disabled = false;
   search.addEventListener("input", render);
+  search.addEventListener("focus", openSuggestions);
+  search.addEventListener("blur", closeSuggestions);
+  search.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !suggestions.hidden) {
+      event.preventDefault();
+      closeSuggestions();
+    } else if ((event.key === "ArrowDown" || event.key === "ArrowUp") && options.length) {
+      event.preventDefault();
+      if (suggestions.hidden) openSuggestions();
+      if (activeOption >= 0) suggestions.children[activeOption].setAttribute("aria-selected", "false");
+      const offset = event.key === "ArrowDown" ? 1 : -1;
+      activeOption = activeOption < 0 && offset < 0 ? options.length - 1 :
+        (activeOption + offset + options.length) % options.length;
+      const option = suggestions.children[activeOption];
+      option.setAttribute("aria-selected", "true");
+      search.setAttribute("aria-activedescendant", option.id);
+      option.scrollIntoView({ block: "nearest" });
+    } else if (event.key === "Enter" && activeOption >= 0) {
+      event.preventDefault();
+      select(options[activeOption]);
+    }
+  });
   render();
 }
 

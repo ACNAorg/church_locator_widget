@@ -18,15 +18,37 @@ body {
   background: #f8faf8;
 }
 label { font-weight: 650; }
-input {
+.search-field {
+  position: relative;
   flex: 1 1 12rem;
   min-width: 0;
+  z-index: 1100;
+}
+input {
+  width: 100%;
   padding: .65rem .8rem;
   border: 1px solid #8da699;
   border-radius: .4rem;
   background: white;
   font: inherit;
 }
+#suggestions {
+  position: absolute;
+  inset: calc(100% + .25rem) 0 auto;
+  max-height: min(20rem, 45vh);
+  overflow: auto;
+  margin: 0;
+  padding: .25rem;
+  list-style: none;
+  border: 1px solid #8da699;
+  border-radius: .4rem;
+  background: white;
+  box-shadow: 0 .35rem 1rem #18382e24;
+}
+#suggestions li { padding: .45rem .6rem; border-radius: .25rem; cursor: pointer; }
+#suggestions li:hover, #suggestions [aria-selected="true"] { background: #e3eee7; }
+#suggestions strong, #suggestions small { display: block; }
+#suggestions small { color: #425d52; }
 output { font-size: .875rem; }
 #map { min-height: 240px; background: #dce6e0; }
 .church-popup p { margin: .35rem 0; }
