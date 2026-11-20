@@ -3,7 +3,10 @@ name: Publish church locator
 on:
   push:
     branches: [main]
-    paths: ['site/**', '.github/workflows/pages.yml']
+    paths: ['.github/workflows/pages.yml']
+  schedule:
+    - cron: '15 4 * * *'
+      timezone: America/Los_Angeles
   workflow_dispatch:
 
 permissions:
@@ -23,11 +26,30 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Download the latest successful widget build
+        env:
+          GH_TOKEN: ${{ secrets.CHURCH_LOCATOR_ARTIFACT_TOKEN }}
+          GH_REPO: ACNAorg/church_locator
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Add CHURCH_LOCATOR_ARTIFACT_TOKEN with Actions read access to ACNAorg/church_locator."
+            exit 1
+          fi
+          run_id="$(gh run list --workflow church-map-refresh.yml --branch main --status success \
+            --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          test -n "$run_id"
+          gh run download "$run_id" --name church-map-widget --dir widget-build
+          mkdir widget-release
+          for file in index.html widget.css widget.js churches.live.json maps-config.json churches.sample.json; do
+            test -s "widget-build/$file"
+            cp "widget-build/$file" "widget-release/$file"
+          done
+          jq -e 'length > 0 and all(.[]; has("expires_at"))' widget-release/churches.live.json >/dev/null
+          jq -e '(.key | length > 0) and (.mapId | length > 0)' widget-release/maps-config.json >/dev/null
+
+      - uses: actions/upload-pages-artifact@v5
         with:
-          persist-credentials: false
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - uses: actions/deploy-pages@v4
+          path: widget-release
+
+      - uses: actions/deploy-pages@v5
         id: deployment
